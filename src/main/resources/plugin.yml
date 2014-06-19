@@ -1,0 +1,45 @@
+name: CountDownSigns
+main: org.codemine.countdownsigns.CDS
+author: Relicum
+version: ${project.version}
+description: CountDown Signs that destory the block below.
+
+commands:
+    cdspause:
+        description: Used to toogle the count down on and off
+        usage: /<command> Used to toogle the count down on or off
+        aliases: [cdsp]
+        permission: countdown.sign.pause
+    cdsstatus:
+        description: Used to check the status of the countdown
+        usage: /<command> Used to check the status of the command
+        aliases: [cdss]
+        permission: countdown.sign.status
+    cdshelp:
+        description: Various help guides, You can use Tab to see more options
+        usage: /<command> [arg]
+        aliases: [cdsh]
+        permission: countdown.sign.help
+
+
+permissions:
+    countdown.sign.*:
+        description: Gives you all permissions
+        children:
+            countdown.sign.place: true
+            countdown.sign.pause: true
+            countdown.sign.status: true
+            countdown.sign.help: true
+    countdown.sign.place:
+        description: Allows the player to place Countdown Signs
+        default: op
+    countdown.sign.pause:
+        description: Allows you to toggle the countdown on and off
+        default: op
+    countdown.sign.status:
+        description: Used to check the status of countdown
+        default: op
+    countdown.sign.help:
+        description: View help guides
+        default: op
+
