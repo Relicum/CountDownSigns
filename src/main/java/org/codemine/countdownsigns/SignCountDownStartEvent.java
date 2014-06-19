@@ -21,74 +21,93 @@ public class SignCountDownStartEvent extends BlockEvent implements Cancellable {
     private long period;
     private long total;
     private Location location;
+
     /**
      * Instantiates a new Sign count down start event.
      *
-     * @param block  the Sign Block
+     * @param block the Sign Block
      * @param period the period between updates
-     * @param total  the total time to run before the Block below explodes
+     * @param total the total time to run before the Block below explodes
      */
-    public SignCountDownStartEvent(Block block,long period,long total){
+    public SignCountDownStartEvent(Block block, long period, long total)
+    {
         super(block);
-        if (!(block instanceof Sign)) {
+        if(!(block instanceof Sign))
+        {
             this.setCancelled(true);
             System.out.println("Error: Block was not an instance of a sign");
             return;
         }
-        this.sign = (Sign)block;
+        this.sign = (Sign) block;
         this.period = period;
         this.total = total;
         this.location = block.getLocation();
 
     }
+
+    public static HandlerList getHandlerList()
+    {
+        return handlers;
+
+    }
+
     /**
      * Gets sign.
      *
      * @return the sign block
      */
-    public Sign getSign(){
+    public Sign getSign()
+    {
         return sign;
     }
+
     /**
      * Gets total remain time in milli Seconds
      *
      * @return the total time left until the block explodes
      */
-    public long getTotal(){
+    public long getTotal()
+    {
         return total;
     }
+
     /**
      * Gets period.
      *
      * @return the period between tasks in milli seconds
      */
-    public long getPeriod(){
+    public long getPeriod()
+    {
         return period;
     }
+
     /**
      * Gets location of the sign block
      *
      * @return the location of the sign block
      */
-    public Location getLocation(){
+    public Location getLocation()
+    {
         return location;
     }
+
     @Override
-    public HandlerList getHandlers(){
+    public HandlerList getHandlers()
+    {
         return handlers;
 
     }
-    public static HandlerList getHandlerList(){
-        return handlers;
 
-    }
     @Override
-    public boolean isCancelled(){
+    public boolean isCancelled()
+    {
         return cancelled;
 
     }
+
     @Override
-    public void setCancelled(boolean cancelled){
+    public void setCancelled(boolean cancelled)
+    {
         this.cancelled = cancelled;
 
     }
