@@ -23,7 +23,6 @@ import java.util.Map;
 public class BlockLoc implements ConfigurationSerializable {
 
     @Getter
-    @Setter
     private int X;
     @Getter
     @Setter
@@ -35,35 +34,34 @@ public class BlockLoc implements ConfigurationSerializable {
     @Setter
     private String world;
 
+    private String name;
+
     /**
-     * Instantiates a new Block loc.
+     * P Instantiates a new Block loc.
      *
      * @param x the x
      * @param y the y
      * @param z the z
      * @param world the world
      */
-    public BlockLoc(int x, int y, int z, String world)
-    {
+    public BlockLoc(int x, int y, int z, String world) {
         Validate.notNull(x, "X Cord can not be empty when setting block loc");
         Validate.notNull(y, "Y Cord can not be empty when setting block loc");
         Validate.notNull(z, "Z Cord can not be empty when setting block loc");
         Validate.notNull(world, "World can not be null when setting block lock");
-        this.X = x;
-        this.Y = y;
-        this.Z = z;
-        this.world = world;
+        this.X=x;
+        this.Y=y;
+        this.Z=z;
+        this.world=world;
     }
 
     // deserialize the object
-    public static BlockLoc deserialize(Map<String,Object> map)
-    {
-        Object objX = map.get("X"),
-          objY = map.get("Y"),
-          objZ = map.get("Z"),
-          objW = map.get("world");
-        if(objX == null || objY == null || objZ == null || objW == null)
-        {
+    public static BlockLoc deserialize(Map<String,Object> map) {
+        Object objX=map.get("X"),
+          objY=map.get("Y"),
+          objZ=map.get("Z"),
+          objW=map.get("world");
+        if(objX == null || objY == null || objZ == null || objW == null) {
             throw new NullPointerException("One of the values in Block is null while trying to deserialize the class");
         }
         return new BlockLoc((Integer) objX, (Integer) objY, (Integer) objZ, (String) objW);
@@ -71,16 +69,14 @@ public class BlockLoc implements ConfigurationSerializable {
     }
 
     //Get full location
-    public Location getLocation()
-    {
+    public Location getLocation() {
         return new Location(Bukkit.getWorld(getWorld()), getX(), getY(), getZ());
     }
 
     //serialize the object
     @Override
-    public Map<String,Object> serialize()
-    {
-        Map<String,Object> map = new HashMap<>(4);
+    public Map<String,Object> serialize() {
+        Map<String,Object> map=new HashMap<>(4);
         map.put("X", getX());
         map.put("Y", getY());
         map.put("Z", getZ());
@@ -90,8 +86,7 @@ public class BlockLoc implements ConfigurationSerializable {
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "world:" + getWorld() + "," + "X:" + getX() + "," + "Y:" + getY() + "," + "Z:" + getZ();
 
     }

@@ -5,17 +5,27 @@ version: ${project.version}
 description: CountDown Signs that destory the block below.
 
 commands:
-    cdspause:
+    cds:
+        description: this is the main sub
+        usage: /<command> [main]
+        permission: countdown.sign
+    cds remove:
+        label: cds remove
+        description: Any prefix command that all commands run under
+        usage: /<command> remove
+        aliases: [cdsr]
+        permission: countdown.sign.remove
+    cds toggle:
         description: Used to toogle the count down on and off
         usage: /<command> Used to toogle the count down on or off
         aliases: [cdsp]
-        permission: countdown.sign.pause
-    cdsstatus:
+        permission: countdown.sign.toggle
+    cds status:
         description: Used to check the status of the countdown
         usage: /<command> Used to check the status of the command
         aliases: [cdss]
         permission: countdown.sign.status
-    cdshelp:
+    cds help:
         description: Various help guides, You can use Tab to see more options
         usage: /<command> [arg]
         aliases: [cdsh]
@@ -27,13 +37,14 @@ permissions:
         description: Gives you all permissions
         children:
             countdown.sign.place: true
-            countdown.sign.pause: true
+            countdown.sign.toggle: true
             countdown.sign.status: true
             countdown.sign.help: true
+            countdown.sign.remove: true
     countdown.sign.place:
         description: Allows the player to place Countdown Signs
         default: op
-    countdown.sign.pause:
+    countdown.sign.toggle:
         description: Allows you to toggle the countdown on and off
         default: op
     countdown.sign.status:
@@ -41,5 +52,11 @@ permissions:
         default: op
     countdown.sign.help:
         description: View help guides
+        default: op
+    countdown.sign.remove:
+        description: Remove the sign and all its configs
+        default: op
+    countdown.sign:
+        description: Many prefix for commands
         default: op
 
