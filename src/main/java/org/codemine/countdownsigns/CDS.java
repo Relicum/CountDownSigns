@@ -1,27 +1,22 @@
 package org.codemine.countdownsigns;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
-import org.bukkit.entity.EntityType;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.CreatureSpawnEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
+import org.codemine.schedule.TimeUnit;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
 /**
- * Name: CDS.java Created: 14 June 2014
+ * Main Plugin file that currently provides a lot of the thread logic.
  *
  * @author Relicum
  * @version 0.0.1
@@ -29,11 +24,22 @@ import java.util.logging.Level;
 public class CDS extends JavaPlugin implements Listener {
 
     private static CDS instance;
+
+    public boolean toggle = false;
+
     private boolean debug;
-    private RunningSign task;
+
+    private SignTimer signTimer;
+
+    private RunningSign runningSign;
+
+    private BukkitTask signTask;
+
     private Explosion explosion;
+
     private CommandManager cm;
-    private Map<String,Object> signMap;
+
+    private Map<String, Object> signMap;
 
     /**
      * Utility method for getting a plugins Main JavaPlugin Class
@@ -52,9 +58,13 @@ public class CDS extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new SignChange(this), this);
         getConfig().options().copyDefaults(true);
         saveDefaultConfig();
-        this.debug=getConfig().getBoolean("sign.settings.debug", false);
-        instance=this;
-        cm=new CommandManager(this);
+
+        this.debug = getConfig().getBoolean("sign.settings.debug");
+        if (containsSignTimer()) {
+            signTimer = (SignTimer) getConfig().get("sign.signtimer");
+        }
+        instance = this;
+        cm = new CommandManager(this);
         getCommand("cds").setExecutor(cm);
         getCommand("cds").setTabCompleter(cm);
         getCommand("cds toggle").setExecutor(cm);
@@ -63,111 +73,308 @@ public class CDS extends JavaPlugin implements Listener {
         getCommand("cds help").setTabCompleter(cm);
         getCommand("cds remove").setExecutor(cm);
         getCommand("cds remove").setTabCompleter(cm);
-        SignTimer signTimer;
-        if(getConfig().contains("sign.signtimer")) {
-            System.out.println("It has found sign timer");
-            signTimer=(SignTimer) getConfig().get("sign.signtimer");
-            //System.out.println("The block is ");
-            if(!signTimer.isPaused()) {
-                task=new RunningSign(this, signTimer);
 
+        if (checkSignTimerIsLoaded()) {
+
+            if (isDebug())
+                MessageUtil.logDebug(Level.INFO, "A sign timer object has been found");
+
+            registerProtection();
+
+            //If the SignTimer Object is not set to paused then create a new
+            //Repeating task passing in the SignTimer Object
+            if (!getSignTimer().isPaused()) {
+                runningSign = startCountdownTask(true);
+                signTask = runningSign.runTaskTimer(this, 100l, getSignTimer().getUpdatePeriod(), TimeUnit.TICKS);
             }
         }
 
     }
 
     public void onDisable() {
-        if(getServer().getScheduler().getPendingTasks().size() > 0) {
-            for(BukkitTask bukkitTask : getServer().getScheduler().getPendingTasks()) {
+        if (getServer().getScheduler().getPendingTasks().size() > 0) {
+            for (BukkitTask bukkitTask : getServer().getScheduler().getPendingTasks()) {
                 System.out.println("The task is owned by " + bukkitTask.getOwner().getName());
             }
 
         }
         System.out.println("Number of Active workers is " + getServer().getScheduler().getActiveWorkers().size());
-        if(task != null && task.isRunning()) {
-            SignTimer timer=task.getSignTimer();
-            getConfig().set("sign.signtimer", timer);
-            MessageUtil.logInfoFormatted("Saving the Count Downs State");
-            task.cancelTheTask();
+
+        boolean doSave = false;
+
+        if (isCountDownRunning()) {
+
+            stopCountdownTask(false, false);
+            doSave = true;
+
+            if (containsSignTimer() && getSignTimer().isCompleted() && containsSignTimer()) {
+                deleteSignConfigs();
+                doSave = false;
+            }
+        } else {
+            if (containsSignTimer() && getSignTimer().isCompleted() && containsSignTimer()) {
+                deleteSignConfigs();
+                doSave = false;
+            }
         }
-        saveConfig();
-    }
 
-    public void onPlay(final BlockBreakEvent e) {
-        if(e.getBlock().getType() == Material.GRASS) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
-
-                @Override
-                public void run() {
-                    BlockState bt=e.getBlock().getState();
-                    bt.setType(Material.GRASS);
-                    bt.update(true);
-                }
-            }, 1l);
-
-            //bt.setType(Material.GRASS);
-            // bt.update(true);
-            getConfig().set("sign.settings.test", "hello");
+        if (doSave) {
+            if (isDebug()) {
+                MessageUtil.logDebug(Level.INFO, "Final save is having to be made");
+            }
             saveConfig();
-            reloadConfig();
-            e.setCancelled(true);
-            return;
         }
-
-        e.getPlayer().sendMessage(ChatColor.GREEN + "Block broken was " + e.getBlock().getType().name());
-        e.getPlayer().sendMessage("hello");
-    }
-
-    //@EventHandler(priority=EventPriority.HIGHEST)
-    public void sspawn(CreatureSpawnEvent e) {
-        if(e.getEntity().getType().equals(EntityType.CHICKEN)) {
-            getServer().broadcastMessage(ChatColor.GREEN + "A Chicken has spawned into world with the id of :" + e.getEntity().getUniqueId().toString());
-        }
-    }
-
-    @EventHandler(priority=EventPriority.HIGHEST)
-    public void despawn(EntityDeathEvent e) {
-        if(e.getEntity().getType().equals(EntityType.CHICKEN)) {
-            getServer().broadcastMessage(ChatColor.RED + "A Chicken has de spawned with id of: " + e.getEntity().getUniqueId().toString());
-        }
-    }
-
-    public void onPlace(BlockPlaceEvent e) {
-        if(e.getBlockPlaced().getType().isTransparent()) {
-            e.setCancelled(true);
-            return;
-        }
-
-        e.getPlayer().sendMessage(ChatColor.AQUA + "Block placed is " + e.getBlock().getType().name());
-
     }
 
     /**
-     * Get the Task that is running the countdown sign
-     *
-     * @return the running sign
+     * Register protection Listeners
      */
-    public RunningSign getTask() {
-        return task;
+    public void registerProtection() {
+        if (checkSignTimerIsLoaded()) {
+
+            if (getConfig().getBoolean("sign.settings.auto-protect")) {
+                getServer().getPluginManager().registerEvents(new SignProtection(this, getSignTimer().getSignLocation().getLocation()), this);
+
+            }
+        }
     }
 
-    public void startTask() {
+    /**
+     * Unregister BlockBreakEvent and BlockDamageEvent
+     */
+    public void unregisterEvent() {
+
         try {
-            task=null;
-            task=new RunningSign(this, (SignTimer) getConfig().get("sign.signtimer"));
-        }
-        catch(Exception e) {
+            BlockBreakEvent.getHandlerList().unregister((org.bukkit.plugin.Plugin) this);
+            BlockDamageEvent.getHandlerList().unregister((org.bukkit.plugin.Plugin) this);
+        } catch (Exception e) {
+            if (isDebug())
+                MessageUtil.logDebug(Level.SEVERE, "Unable to unregister events Break and Damage");
             e.printStackTrace();
         }
     }
 
+    /**
+     * Get the Task that is running the countdown sign <p>This method is synchronized to make it thread save. (Provided all access to the value is done using this method)
+     *
+     * @return the running sign
+     */
+    public synchronized RunningSign getRunningSign() {
+        return runningSign;
+    }
+
+    /**
+     * Set runningSign Property, or set to null;
+     *
+     * @param paramRunningSign set to an instance of {@link org.codemine.countdownsigns.RunningSign} or set to null
+     */
+    public synchronized void setRunningSign(RunningSign paramRunningSign) {
+
+        if (paramRunningSign == null) {
+            runningSign = null;
+        } else {
+            runningSign = paramRunningSign;
+        }
+    }
+
+    private BukkitTask getSignTask() {
+        return signTask;
+    }
+
+    public synchronized Explosion getExplosionTask() {
+        return explosion;
+    }
+
+    /**
+     * Is count down running.
+     *
+     * @return the boolean true and the task is running, false and its not
+     */
+    public boolean isCountDownRunning() {
+
+        if (runningSign == null) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Toggle countdown.
+     *
+     * @return boolean
+     */
+    public int toggleCountdown() {
+
+        if (checkSignTimerIsLoaded() && signTimer.isCompleted()) {
+            return -1;
+        }
+
+        if (!containsSignTimer()) {
+
+            return 0;
+        }
+
+        if (!toggle) {
+            try {
+                MessageUtil.logInfoFormatted("Toggleing On");
+                getSignTimer().setPaused(false);
+
+                runningSign = startCountdownTask(true);
+
+                startSignTask(runningSign);
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
+            toggle = true;
+            return 2;
+
+        } else {
+            MessageUtil.logInfoFormatted("Toggleing Off");
+            getRunningSign().getSignTimer().setPaused(true);
+            stopCountdownTask(true, false);
+            System.out.println(signTimer.toString());
+            toggle = false;
+            return 1;
+
+        }
+
+    }
+
+    /**
+     * Start a new Sign Countdown task.
+     *
+     * @param forceStart if set to true it will check if there is a current task running. If false if will just cancel any current running task and start a new one.
+     * @return the boolean true if the Countdown task was started. False if there was a problem.
+     * @throws IllegalStateException the illegal state exception then forceStart was set to false and a current task was found to be running
+     * @throws NullPointerException  when trying to load SignTimer object from config file
+     */
+    private RunningSign startCountdownTask(boolean forceStart) throws IllegalStateException, NullPointerException {
+
+        if (!forceStart) {
+            if (runningSign != null) {
+                throw new IllegalStateException("Unable to start new Countdown task as there is already one running");
+
+            }
+        } else {
+            try {
+                if (isCountDownRunning()) {
+                    setSignTimer(getRunningSign().getSignTimer());
+                    saveSignTimer(false);
+                    getSignTask().cancel();
+                    getRunningSign().cancelTheTask();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+
+            }
+        }
+        if (!checkSignTimerIsLoaded()) {
+            loadSignTimer();
+        }
+
+        return new RunningSign(this, getSignTimer());
+    }
+
+    /**
+     * Stop countdown task and optional start the Explosion task as well
+     *
+     * @param save           the save if true the SignTimer object will be save to disk.
+     * @param startExplosion if true it will start the explosion task. False and it will just stop the Countdown task
+     */
+    public void stopCountdownTask(boolean save, boolean startExplosion) {
+        //Running and task completed
+        if (isCountDownRunning() && getSignTimer().isCompleted()) {
+            saveSignTimer(false);
+            getRunningSign().cancel();
+            getSignTask().cancel();
+            if (isDebug()) {
+                MessageUtil.logDebug(Level.INFO, "The Bukkit task had to be canceled");
+            }
+            setCountdownTaskToNull();
+            if (isCountDownRunning()) {
+                if (isDebug()) {
+                    MessageUtil.logDebug(Level.SEVERE, "The RunningSign task is not null even though we previously set it to null");
+                }
+            }
+            if (signTask != null) {
+                if (isDebug()) {
+                    MessageUtil.logDebug(Level.SEVERE, "The Bukkit task is not null even though we previously set it to null");
+                }
+
+            }
+
+            if (deleteSignConfigs()) {
+                MessageUtil.logDebug(Level.INFO, "Successfully removed sign timer configs from file.");
+            } else {
+                if (isDebug()) {
+                    MessageUtil.logDebug(Level.SEVERE, "FAILED to remove sign timer configs from file.");
+                }
+            }
+            runningSign = null;
+            signTask = null;
+            if (startExplosion) {
+                if (isDebug()) {
+                    MessageUtil.logDebug(Level.INFO, "The Explosion task has been set to start on stopping of sign countdown");
+                } else {
+                    MessageUtil.logDebug(Level.SEVERE, "The explosion task is not set to start. Just to stop sign countdown");
+                }
+            }
+
+            //Start Explosion Effect
+            if (getConfig().getBoolean("sign.settings.explosion")) {
+
+                startExplosion(getSignTimer());
+            }
+
+            return;
+
+        }
+
+        //Running and task not completed
+        if (!getSignTimer().isCompleted() && isCountDownRunning()) {
+            getRunningSign().getSignTimer().setPaused(true);
+            saveSignTimer(save);
+            getRunningSign().cancelTheTask();
+            getSignTask().cancel();
+            setCountdownTaskToNull();
+            return;
+
+        }
+
+        //Incomplete and not running
+        if (!getSignTimer().isCompleted()) {
+            getSignTimer().setPaused(true);
+            saveSignTimer(save);
+            setCountdownTaskToNull();
+            if (getRunningSign() != null) {
+                runningSign = null;
+                if (isDebug()) {
+                    MessageUtil.logDebug(Level.SEVERE, "The task was not running and not complete but runningSign was not null. ERROR");
+                }
+            }
+            if (signTask != null) {
+                signTask = null;
+                if (isDebug()) {
+                    MessageUtil.logDebug(Level.SEVERE, "The task was not running and not complete but signTask was not null. ERROR");
+                }
+            }
+            return;
+        }
+    }
+
     public void setSignMap() {
-        this.signMap=new HashMap<>();
-        signMap=getTask().getSignTimerMap();
+        this.signMap = new HashMap<>();
+        signMap = getRunningSign().getSignTimerMap();
 
     }
 
     public boolean runExplosion(SignTimer signTimer) {
+        stopCountdownTask(false, true);
+        if (isDebug()) {
+            MessageUtil.logDebug(Level.INFO, "Sign CountDown Sign Has been Stopped");
+        }
+        runningSign = null;
         startExplosion(signTimer);
         return true;
     }
@@ -179,21 +386,31 @@ public class CDS extends JavaPlugin implements Listener {
      */
     public void startExplosion(SignTimer signTimer) {
         try {
-            new Explosion(this, signTimer.getSignLocation().getLocation().getBlock().getState(),
-                           signTimer.getExplodingLocation().getLocation().getBlock().getState(),
-                           signTimer.isUseSound(),
-                           signTimer.isExplosion(),
-                           signTimer.isUseEffect()).runTaskLater(this, 1l);
-        }
-        catch(IllegalArgumentException | IllegalStateException e) {
+            explosion = (Explosion) new Explosion(this, getSignTimer().getSignLocation().getLocation().getBlock().getState(),
+                    getSignTimer().getExplodingLocation().getLocation().getBlock().getState(),
+                    getSignTimer().isUseSound(),
+                    getSignTimer().isExplosion(),
+                    getSignTimer().isUseEffect());
+        } catch (IllegalArgumentException | IllegalStateException e) {
             MessageUtil.logDebug(Level.SEVERE, e.getMessage());
             e.printStackTrace();
         }
-
+        //TODO Fix bug that still protects the blocks after the Countdown has ended
     }
 
-    public void setTaskToNull() {
-        task=null;
+    /**
+     * Sets countdown task to null.
+     */
+    public synchronized void setCountdownTaskToNull() {
+        signTask = null;
+        runningSign = null;
+    }
+
+    /**
+     * Set explosion task to null.
+     */
+    public synchronized void setExplosionTaskToNull() {
+        explosion = null;
     }
 
     /**
@@ -203,6 +420,157 @@ public class CDS extends JavaPlugin implements Listener {
      */
     public boolean isDebug() {
         return debug;
+    }
+
+    /**
+     * Gets the {@link org.codemine.countdownsigns.SignTimer} object. <p>This method is synchronized to make it thread save. (Provided all access to the value is done using this
+     * method)
+     *
+     * @return the {@link org.codemine.countdownsigns.SignTimer} object.
+     */
+    public synchronized SignTimer getSignTimer() {
+        return signTimer;
+    }
+
+    /**
+     * Sets new {@link org.codemine.countdownsigns.SignTimer} object <p>This method is synchronized to make it thread save. (Provided all access to the value is done using this
+     * method)
+     *
+     * @param paramSignTimer set the field to a instance of {@link org.codemine.countdownsigns.SignTimer}
+     */
+    public synchronized void setSignTimer(SignTimer paramSignTimer) {
+
+        if (paramSignTimer == null) {
+            signTimer = null;
+        } else {
+            signTimer = paramSignTimer;
+        }
+
+    }
+
+    /**
+     * Load SignTimer object from disk and stores it in signTimer field
+     *
+     * @throws NullPointerException the null pointer exception if there is no record stored
+     */
+    public void loadSignTimer() throws NullPointerException {
+
+        if (getSignTimer() != null) return;
+
+        if (containsSignTimer()) {
+            setSignTimer((SignTimer) getConfig().get("sign.signtimer"));
+        } else {
+            throw new NullPointerException("No record of SignTimer can be found in config file");
+        }
+
+    }
+
+    /**
+     * Reload sign timer.
+     *
+     * @throws NullPointerException if the config file does not contain a record of SignTimer
+     */
+    public void reloadSignTimer() throws NullPointerException {
+
+        if (containsSignTimer()) {
+            setSignTimer((SignTimer) getConfig().get("sign.signtimer"));
+        } else {
+            throw new NullPointerException("No record of SignTimer can be found in config file");
+        }
+
+    }
+
+    /**
+     * Checks to see if SignTimer is already loaded
+     *
+     * @return the boolean true and its is load, false and it is not loaded. False does not mean you can go ahead and load it as it may not even be set.
+     */
+    public boolean checkSignTimerIsLoaded() {
+
+        if (getSignTimer() != null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Save SignTimer Object from Task back to Main Class.
+     *
+     * @param toDisk set to true for the SignTimer object to be saved back to disk at same time
+     */
+    public void saveSignTimer(boolean toDisk) {
+
+        if (isCountDownRunning()) {
+
+            setSignTimer(getRunningSign().getSignTimer());
+        }
+
+        if (!checkSignTimerIsLoaded()) {
+            MessageUtil.logServereFormatted("There is no SignTimer object loaded");
+            return;
+        }
+
+        getConfig().set("sign.signtimer", getSignTimer());
+
+        if (toDisk) {
+            saveConfig();
+        }
+    }
+
+    /**
+     * Start sign task.
+     *
+     * @param paramSign the param sign
+     */
+    public void startSignTask(RunningSign paramSign) {
+
+        this.signTask = paramSign.runTaskTimer(this, 100l, signTimer.getUpdatePeriod(), TimeUnit.TICKS);
+
+    }
+
+    /**
+     * Checks to see if there is a stored instance of SignTimer.
+     *
+     * @return the true if there is a stored record false if not
+     */
+    public boolean containsSignTimer() {
+
+        return getConfig().contains("sign.signtimer");
+    }
+
+    /**
+     * Remove a block.
+     *
+     * @param loc the loc
+     * @return the boolean
+     */
+    public boolean removeABlock(Location loc) {
+
+        try {
+            BlockState blockState = loc.getBlock().getState();
+            blockState.setType(Material.AIR);
+            blockState.update(true);
+        } catch (Exception e) {
+            if (debug) {
+                e.printStackTrace();
+            }
+            return false;
+        }
+
+        return true;
+
+    }
+
+    public boolean deleteSignConfigs() {
+
+        if (containsSignTimer()) {
+            getConfig().getConfigurationSection("sign").set("signtimer", null);
+            saveConfig();
+            return true;
+        }
+
+        return false;
     }
 
 }

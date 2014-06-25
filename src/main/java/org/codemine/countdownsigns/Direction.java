@@ -16,8 +16,10 @@ public enum Direction {
     private final float yaw;
 
     private Direction(float paramYaw) {
-        this.yaw=paramYaw;
+        this.yaw = paramYaw;
     }
 
-    public float asFloat() {return yaw;}
+    public float asFloat() {
+        return yaw;
+    }
 }

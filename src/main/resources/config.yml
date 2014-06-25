@@ -8,11 +8,13 @@ sign:
 # Settings section
   settings:
     identifier: '[CDS]'
-    update-period: 40
+    update-period: 20
     time-left: 600
     pause: false
     explosion: true
     use-sound: true
     use-effect: true
     debug: true
-  signtimer:
+    auto-protect: true
+
+
