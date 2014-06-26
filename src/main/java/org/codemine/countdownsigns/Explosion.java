@@ -125,17 +125,17 @@ public class Explosion extends BukkitRun {
         //This is start of the repeating loop for the explosion effect.
         innerRun = new BukkitRun() {
 
-            int count = 400;
+            int count = 300;
 
             boolean isNeeded = true;
 
 
             @Override
             public void run() {
-                if (count == 400) {
+                if (count == 300) {
                     setInnerRunning(true);
                 }
-                if (count < -5) {
+                if (count < -1) {
                     setInnerRunning(false);
                     hasRun = true;
                 }
@@ -192,8 +192,8 @@ public class Explosion extends BukkitRun {
                         y = random.nextInt(6);
                         location.setYaw(Direction.WEST.asFloat());
                     }
-                    //launch a chicken 30% of the time
-                    if ((100 % rand) < 20) {
+                    //launch a chicken 40% of the time
+                    if ((100 % rand) < 40) {
                         Entity entity = sign.getWorld().spawnEntity(sign.getLocation().add(x, y, z), EntityType.CHICKEN);
                         entity.teleport(location.add(x, y, z));
                         entity.setVelocity(entity.getLocation().getDirection().setY(1.8d));
@@ -211,16 +211,14 @@ public class Explosion extends BukkitRun {
                     }
 
                     sign.getWorld().strikeLightningEffect(sign.getLocation().add(x / 20.0f, 0.5f, z / 20.0f));
+                    if (rand <= 50)
                     ParticleEffect.LARGE_EXPLODE.display(sign.getLocation(), x / 15f, 1.5f, z / 15f, 1.5f, 40);
+                    else
                     ParticleEffect.MOB_SPELL.display(sign.getLocation(), x / 10f, 5, z / 10f, 1.9f, 40);
 
                     count -= 5;
 
                 } else {
-                    while (playerIterator.hasNext()) {
-
-                        playerItRun(playerIterator.next());
-                    }
                     if (!chicks.isEmpty()) {
                         //Remove all the chicken entities
                         synchronized (chicks) {
@@ -243,12 +241,6 @@ public class Explosion extends BukkitRun {
                         }
 
                     }
-
-                    for (Player player : plugin.getServer().getOnlinePlayers()) {
-
-                        player.playSound(player.getLocation(), Sound.WITHER_DEATH, 20.0f, 1.0f);
-                    }
-                    // sign.getLocation().getWorld().playSound(sign.getLocation(), Sound.WITHER_DEATH, 20.0f, 1.0f);
                     if (plugin.isDebug()) {
                         MessageUtil.logDebug(Level.INFO, "Should now be running the end of inner loop code as count is less than -1");
                     }
@@ -263,11 +255,11 @@ public class Explosion extends BukkitRun {
 
             }
 
-        }.runTaskTimer(plugin, 100l, 5l);
+        }.runTaskTimer(plugin, 80l, 5l);
         if (hasRun) {
 
             sign.getLocation().getWorld().playSound(location, Sound.WITHER_SHOOT, 20.0f, 1.0f);
-            ParticleEffect.HEART.display(location.add(0.3, 0.1, 0.3), 16.0d, 0.0f, 2.0f, 0.0f, 0.12f, 50);
+            //ParticleEffect.HEART.display(location.add(0.3, 0.1, 0.3), 16.0d, 0.0f, 2.0f, 0.0f, 0.12f, 50);
             sign.getWorld().setStorm(false);
             sign.getWorld().setThundering(false);
             sign.getWorld().setThunderDuration(0);
