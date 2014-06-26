@@ -14,6 +14,8 @@ import org.codemine.schedule.TimeUnit;
 
 import java.util.Arrays;
 
+import static org.bukkit.ChatColor.*;
+
 /**
  * Creates the sign and the countdown length.
  *
@@ -229,11 +231,11 @@ public class SignChange implements Listener {
 
     public JChat getjChat() {
         jChat = new JChat("[");
-        jChat.color(ChatColor.DARK_PURPLE)
+        jChat.color(DARK_PURPLE)
                 .then("CDS")
-                .color(ChatColor.AQUA)
+                .color(AQUA)
                 .then("]")
-                .color(ChatColor.DARK_PURPLE)
+                .color(DARK_PURPLE)
                 .then(" ");
         return jChat;
 
@@ -242,11 +244,14 @@ public class SignChange implements Listener {
     public void showClickStart(Player player) {
         getjChat()
                 .then("To start the CountDown click ")
-                .color(ChatColor.GREEN)
+                .color(GREEN)
                 .then("START")
-                .color(ChatColor.BLUE)
-                .style(ChatColor.UNDERLINE)
-                .itemTooltip("Click to Start Countdown", Arrays.asList("&cTo start the Countdown just click here", " ", "&bOr when you are ready run the command /cds toggle"))
+                .color(BLUE)
+                .style(UNDERLINE)
+                .itemTooltip("Click to Start Countdown", Arrays.asList(
+                        "&cTo start the Countdown just click here",
+                        " ",
+                        "&bOr when you are ready run the command /cds toggle"))
                 .command("/cds toggle")
                 .send(player);
     }
