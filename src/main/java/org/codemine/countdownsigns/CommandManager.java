@@ -321,64 +321,79 @@ public class CommandManager implements TabExecutor {
 
     }
 
+    //TODO Handel exception correctly
     public void showSetUpHelp(Player player) {
-        getjChat()
-                .then("Need help? ")
-                .color(ChatColor.GREEN)
-                .then("SETUP")
-                .color(ChatColor.BLUE)
-                .style(ChatColor.BOLD, ChatColor.UNDERLINE)
-                .itemTooltip("Setup Guide", Arrays.asList("&cIf you need help setting up a sign", " ", "&bThen just click the link"))
-                .command("/cds help setup")
-                .then(" ")
-                .color(ChatColor.GREEN)
-                .then("TOGGLE")
-                .color(ChatColor.RED)
-                .style(ChatColor.BOLD, ChatColor.UNDERLINE)
-                .itemTooltip("Toggle Guide", Arrays.asList("&cIf you need help starting and stopping the countdown", " ", "&bThen just click the link"))
-                .command("/cds help toggle")
-                .send(player);
+        try {
+            getjChat()
+                    .then("Need help? ")
+                    .color(ChatColor.GREEN)
+                    .then("SETUP")
+                    .color(ChatColor.BLUE)
+                    .style(ChatColor.BOLD, ChatColor.UNDERLINE)
+                    .itemTooltip("Setup Guide", Arrays.asList("&cIf you need help setting up a sign", " ", "&bThen just click the link"))
+                    .command("/cds help setup")
+                    .then(" ")
+                    .color(ChatColor.GREEN)
+                    .then("TOGGLE")
+                    .color(ChatColor.RED)
+                    .style(ChatColor.BOLD, ChatColor.UNDERLINE)
+                    .itemTooltip("Toggle Guide", Arrays.asList("&cIf you need help starting and stopping the countdown", " ", "&bThen just click the link"))
+                    .command("/cds help toggle")
+                    .send(player);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
+    //TODO Handel exception correctly
     public void showToggle(Player player) {
 
-        getjChat()
-                .then("Run the command: ")
-                .color(ChatColor.GREEN)
-                .then("/cds toggle")
-                .color(ChatColor.GOLD)
-                .style(ChatColor.ITALIC)
-                .then(" or click ")
-                .color(ChatColor.GREEN)
-                .then("TOGGLE")
-                .color(ChatColor.AQUA)
-                .style(ChatColor.UNDERLINE, ChatColor.BOLD)
-                .itemTooltip("Toggle Guide", Arrays.asList("&5The toggle command allows you to ", "stop and start the countdown.", " ",
-                        "&6The countdown does not reset if you toggle it off", "or on. It will not reset on server restart", " ",
-                        "&aRun &6/cds toggle &a or click on the link"))
-                .command("/cds toggle")
-                .send(player);
+        try {
+            getjChat()
+                    .then("Run the command: ")
+                    .color(ChatColor.GREEN)
+                    .then("/cds toggle")
+                    .color(ChatColor.GOLD)
+                    .style(ChatColor.ITALIC)
+                    .then(" or click ")
+                    .color(ChatColor.GREEN)
+                    .then("TOGGLE")
+                    .color(ChatColor.AQUA)
+                    .style(ChatColor.UNDERLINE, ChatColor.BOLD)
+                    .itemTooltip("Toggle Guide", Arrays.asList("&5The toggle command allows you to ", "stop and start the countdown.", " ",
+                            "&6The countdown does not reset if you toggle it off", "or on. It will not reset on server restart", " ",
+                            "&aRun &6/cds toggle &a or click on the link"))
+                    .command("/cds toggle")
+                    .send(player);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
+    //TODO Handel exception correctly
     public void showStatus(Player player) {
 
-        getjChat()
-                .then("Run the command: ")
-                .color(ChatColor.GREEN)
-                .then("/cds status")
-                .color(ChatColor.GOLD)
-                .style(ChatColor.ITALIC)
-                .then(" or click ")
-                .color(ChatColor.GREEN)
-                .then("STATUS")
-                .color(ChatColor.BLUE)
-                .style(ChatColor.UNDERLINE, ChatColor.BOLD)
-                .tooltip(ChatColor.translateAlternateColorCodes('&', "&6Click to see Countdown status"))
-                .command("/cds status")
-                .then(" to view the status")
-                .color(ChatColor.GREEN)
-                .send(player);
+        try {
+            getjChat()
+                    .then("Run the command: ")
+                    .color(ChatColor.GREEN)
+                    .then("/cds status")
+                    .color(ChatColor.GOLD)
+                    .style(ChatColor.ITALIC)
+                    .then(" or click ")
+                    .color(ChatColor.GREEN)
+                    .then("STATUS")
+                    .color(ChatColor.BLUE)
+                    .style(ChatColor.UNDERLINE, ChatColor.BOLD)
+                    .tooltip(ChatColor.translateAlternateColorCodes('&', "&6Click to see Countdown status"))
+                    .command("/cds status")
+                    .then(" to view the status")
+                    .color(ChatColor.GREEN)
+                    .send(player);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 

@@ -242,17 +242,22 @@ public class SignChange implements Listener {
     }
 
     public void showClickStart(Player player) {
-        getjChat()
-                .then("To start the CountDown click ")
-                .color(GREEN)
-                .then("START")
-                .color(BLUE)
-                .style(UNDERLINE)
-                .itemTooltip("Click to Start Countdown", Arrays.asList(
-                        "&cTo start the Countdown just click here",
-                        " ",
-                        "&bOr when you are ready run the command /cds toggle"))
-                .command("/cds toggle")
-                .send(player);
+        try {
+            getjChat()
+                    .then("To start the CountDown click ")
+                    .color(GREEN)
+                    .then("START")
+                    .color(BLUE)
+                    .style(UNDERLINE)
+                    .itemTooltip("Click to Start Countdown", Arrays.asList(
+                            "&cTo start the Countdown just click here",
+                            " ",
+                            "&bOr when you are ready run the command /cds toggle"))
+                    .command("/cds toggle")
+                    .send(player);
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
     }
 }
