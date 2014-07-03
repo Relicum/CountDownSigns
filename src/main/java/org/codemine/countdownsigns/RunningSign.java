@@ -1,8 +1,6 @@
 package org.codemine.countdownsigns;
 
 import org.apache.commons.lang.text.StrBuilder;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
@@ -40,7 +38,7 @@ public class RunningSign extends BukkitRun {
     public RunningSign(Plugin plugin, SignTimer signTimer) {
         this.plugin = (CDS) plugin;
         this.signTimer = signTimer;
-        this.signLocation = signTimer.getSignLocation().getLocation();
+        this.signLocation = signTimer.getSignLocation().getLocation().clone();
         this.signState = signTimer.getSignLocation().getLocation().getBlock().getState();
         if (!checkBlock()) {
             MessageUtil.logInfoFormatted("The location does not contain a sign");
@@ -48,7 +46,7 @@ public class RunningSign extends BukkitRun {
             this.cancel();
         }
         running = true;
-        MessageUtil.logInfoFormatted("The Count down timer will start in 5 seconds");
+        MessageUtil.logInfoFormatted("Starting Countdown timer");
     }
 
     public long getTotal() {
@@ -66,19 +64,24 @@ public class RunningSign extends BukkitRun {
             loadSign();
             sign.setLine(1, MessageUtil.addColor(li[0]));
             sign.setLine(2, MessageUtil.addColor(li[1]));
-            signState.update(true);
+            getSignState().update(true);
+            //signState.update(true);
             getSignTimer().decrementTimeLeft();
             getSignTimer().setLine(1, li[0]);
             getSignTimer().setLine(2, li[1]);
         }
         if (getSignTimer().getTimeLeft() <= -1) {
 
-            Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "Boom boom boom");
+            //Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "Boom boom boom");
             getSignTimer().setCompleted(true);
             getSignTimer().setPaused(false);
-
+            plugin.toggle = false;
             running = false;
-            plugin.stopCountdownTask(false, true);
+            try {
+                plugin.stopCountdownTask(false, true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
     }

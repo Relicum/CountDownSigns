@@ -27,6 +27,8 @@ public class CDS extends JavaPlugin implements Listener {
 
     public boolean toggle = false;
 
+    public boolean deleteConfigs = false;
+
     private boolean debug;
 
     private SignTimer signTimer;
@@ -40,6 +42,8 @@ public class CDS extends JavaPlugin implements Listener {
     private CommandManager cm;
 
     private Map<String, Object> signMap;
+
+    private boolean saveOnDisable = true;
 
     /**
      * Utility method for getting a plugins Main JavaPlugin Class
@@ -73,6 +77,9 @@ public class CDS extends JavaPlugin implements Listener {
         getCommand("cds help").setTabCompleter(cm);
         getCommand("cds remove").setExecutor(cm);
         getCommand("cds remove").setTabCompleter(cm);
+        getCommand("cds tp").setExecutor(cm);
+        getCommand("cds set").setExecutor(cm);
+        getCommand("cds set").setTabCompleter(cm);
 
         if (checkSignTimerIsLoaded()) {
 
@@ -83,11 +90,14 @@ public class CDS extends JavaPlugin implements Listener {
 
             //If the SignTimer Object is not set to paused then create a new
             //Repeating task passing in the SignTimer Object
-            if (!getSignTimer().isPaused()) {
+            if (autoRestart()) {
                 runningSign = startCountdownTask(true);
                 signTask = runningSign.runTaskTimer(this, 100l, getSignTimer().getUpdatePeriod(), TimeUnit.TICKS);
+                getSignTimer().setPaused(false);
+                toggle = true;
             }
         }
+
 
     }
 
@@ -100,30 +110,42 @@ public class CDS extends JavaPlugin implements Listener {
         }
         System.out.println("Number of Active workers is " + getServer().getScheduler().getActiveWorkers().size());
 
-        boolean doSave = false;
 
         if (isCountDownRunning()) {
 
-            stopCountdownTask(false, false);
-            doSave = true;
+            try {
 
-            if (containsSignTimer() && getSignTimer().isCompleted() && containsSignTimer()) {
-                deleteSignConfigs();
-                doSave = false;
+                stopCountdownTask(false, false);
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } else {
-            if (containsSignTimer() && getSignTimer().isCompleted() && containsSignTimer()) {
-                deleteSignConfigs();
-                doSave = false;
+
+        }
+        if (deleteConfigs) {
+            if (!deleteSignConfigs()) {
+                if (isDebug())
+                    MessageUtil.logDebug(Level.SEVERE, "Failed to delete sign configs");
+            } else {
+                MessageUtil.logDebug(Level.INFO, "Countdown Sign Configs Deleted");
             }
         }
 
-        if (doSave) {
+
+        if (checkSignTimerIsLoaded()) {
+            saveSignTimer(true);
+            setSignTimer(null);
+
+        }
+
+
+        if (isSaveOnDisable()) {
             if (isDebug()) {
                 MessageUtil.logDebug(Level.INFO, "Final save is having to be made");
             }
-            saveConfig();
+
         }
+        saveConfig();
     }
 
     /**
@@ -200,6 +222,21 @@ public class CDS extends JavaPlugin implements Listener {
     }
 
     /**
+     * Checks if the sign should be started on restarts
+     *
+     * @return the boolean true if the SignTimer object has running set to true. False and the SignTimer object has running set to false
+     */
+    public boolean autoRestart() {
+
+        if (signTimer == null) return false;
+
+        if (signTimer.isStartOnRestart()) return true;
+
+        return false;
+
+    }
+
+    /**
      * Toggle countdown.
      *
      * @return boolean
@@ -217,7 +254,7 @@ public class CDS extends JavaPlugin implements Listener {
 
         if (!toggle) {
             try {
-                MessageUtil.logInfoFormatted("Toggleing On");
+                MessageUtil.logInfoFormatted("Toggling On");
                 getSignTimer().setPaused(false);
 
                 runningSign = startCountdownTask(true);
@@ -230,10 +267,15 @@ public class CDS extends JavaPlugin implements Listener {
             return 2;
 
         } else {
-            MessageUtil.logInfoFormatted("Toggleing Off");
+            MessageUtil.logInfoFormatted("Toggling Off");
             getRunningSign().getSignTimer().setPaused(true);
-            stopCountdownTask(true, false);
-            System.out.println(signTimer.toString());
+
+            try {
+                stopCountdownTask(true, false);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            //System.out.println(signTimer.toString());
             toggle = false;
             return 1;
 
@@ -259,8 +301,9 @@ public class CDS extends JavaPlugin implements Listener {
         } else {
             try {
                 if (isCountDownRunning()) {
+                    getSignTimer().setPaused(false);
                     setSignTimer(getRunningSign().getSignTimer());
-                    saveSignTimer(false);
+                    saveSignTimer(true);
                     getSignTask().cancel();
                     getRunningSign().cancelTheTask();
                 }
@@ -282,86 +325,97 @@ public class CDS extends JavaPlugin implements Listener {
      * @param save           the save if true the SignTimer object will be save to disk.
      * @param startExplosion if true it will start the explosion task. False and it will just stop the Countdown task
      */
-    public void stopCountdownTask(boolean save, boolean startExplosion) {
+    public void stopCountdownTask(boolean save, boolean startExplosion) throws Exception {
         //Running and task completed
-        if (isCountDownRunning() && getSignTimer().isCompleted()) {
-            saveSignTimer(false);
-            getRunningSign().cancel();
-            getSignTask().cancel();
+
+        if (!isCountDownRunning()) {
             if (isDebug()) {
-                MessageUtil.logDebug(Level.INFO, "The Bukkit task had to be canceled");
+                MessageUtil.logDebug(Level.SEVERE, "The stopCountdownTask method is returning the there are no countdowns running, this strong indicates a bug.");
+                throw new Exception("No countdowns running but stopCountdownTask has been called ???");
+
             }
+        }
+
+        if (isCountDownRunning()) {
+            getRunningSign().getSignTimer().setPaused(true);
+            saveSignTimer(true);
+            getSignTask().cancel();
+            getRunningSign().cancelTheTask();
+
+
             setCountdownTaskToNull();
-            if (isCountDownRunning()) {
-                if (isDebug()) {
-                    MessageUtil.logDebug(Level.SEVERE, "The RunningSign task is not null even though we previously set it to null");
-                }
-            }
-            if (signTask != null) {
-                if (isDebug()) {
-                    MessageUtil.logDebug(Level.SEVERE, "The Bukkit task is not null even though we previously set it to null");
-                }
 
+            if (runningSign != null || signTask != null) {
+                if (isDebug()) {
+                    MessageUtil.logDebug(Level.SEVERE, "Error: The RunningSign task or SignTask is not null even though we previously set it to null");
+                }
+                return;
             }
 
-            if (deleteSignConfigs()) {
-                MessageUtil.logDebug(Level.INFO, "Successfully removed sign timer configs from file.");
-            } else {
+            if (isDebug())
+                MessageUtil.logDebug(Level.INFO, "All Tasks connected to the sign countdown should now have been cancelled and nulled");
+
+
+            if (deleteConfigs) {
+                if (isDebug())
+                    MessageUtil.logDebug(Level.INFO, "Delete Configs is set to true");
+                if (deleteSignConfigs()) {
+                    MessageUtil.logDebug(Level.INFO, "Successfully removed sign timer configs from file.");
+                }
                 if (isDebug()) {
                     MessageUtil.logDebug(Level.SEVERE, "FAILED to remove sign timer configs from file.");
                 }
+                deleteConfigs = false;
+                toggle = false;
             }
-            runningSign = null;
-            signTask = null;
-            if (startExplosion) {
-                if (isDebug()) {
-                    MessageUtil.logDebug(Level.INFO, "The Explosion task has been set to start on stopping of sign countdown");
-                } else {
-                    MessageUtil.logDebug(Level.SEVERE, "The explosion task is not set to start. Just to stop sign countdown");
-                }
+
+            //Should of cancelled everything now ready to start countdown
+            //First return all players that have explosion set to false.
+            if (!startExplosion) {
+                MessageUtil.logInfoFormatted("Countdown tasks are now shutdown");
+                toggle = false;
+                return;
             }
+
 
             //Start Explosion Effect
-            if (getConfig().getBoolean("sign.settings.explosion")) {
+            if (getSignTimer().isExplosion()) {
 
-                startExplosion(getSignTimer());
-            }
+                try {
+                    startExplosion(getSignTimer());
 
-            return;
-
-        }
-
-        //Running and task not completed
-        if (!getSignTimer().isCompleted() && isCountDownRunning()) {
-            getRunningSign().getSignTimer().setPaused(true);
-            saveSignTimer(save);
-            getRunningSign().cancelTheTask();
-            getSignTask().cancel();
-            setCountdownTaskToNull();
-            return;
-
-        }
-
-        //Incomplete and not running
-        if (!getSignTimer().isCompleted()) {
-            getSignTimer().setPaused(true);
-            saveSignTimer(save);
-            setCountdownTaskToNull();
-            if (getRunningSign() != null) {
-                runningSign = null;
-                if (isDebug()) {
-                    MessageUtil.logDebug(Level.SEVERE, "The task was not running and not complete but runningSign was not null. ERROR");
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            }
-            if (signTask != null) {
-                signTask = null;
-                if (isDebug()) {
-                    MessageUtil.logDebug(Level.SEVERE, "The task was not running and not complete but signTask was not null. ERROR");
+            } else {
+
+                if (removeABlock(getSignTimer().getSignLocation().getLocation())) {
+
+                    MessageUtil.logInfoFormatted("Sign Successfully Removed");
+                } else {
+                    MessageUtil.logServereFormatted("Unable to remove sign");
                 }
+
+                if (removeABlock(getSignTimer().getExplodingLocation().getLocation())) {
+                    MessageUtil.logInfoFormatted("Block Successfully Removed");
+                } else {
+                    MessageUtil.logServereFormatted("Unable to remove block");
+                }
+
+
+                if (deleteSignConfigs()) {
+                    MessageUtil.logInfoFormatted("Configs successfully removed from file");
+                    unregisterEvent();
+                    if (signTimer != null)
+                        signTimer = null;
+                } else MessageUtil.logServereFormatted("Unable to remove configs from file");
+
+
+
             }
-            return;
         }
-    }
+
+    } //here.............
 
     public void setSignMap() {
         this.signMap = new HashMap<>();
@@ -369,24 +423,27 @@ public class CDS extends JavaPlugin implements Listener {
 
     }
 
-    public boolean runExplosion(SignTimer signTimer) {
-        stopCountdownTask(false, true);
-        if (isDebug()) {
-            MessageUtil.logDebug(Level.INFO, "Sign CountDown Sign Has been Stopped");
+    public boolean preStartExplosion() {
+
+        if (!checkSignTimerIsLoaded()) {
+            MessageUtil.logDebug(Level.SEVERE, "Can start Explosion no settings found in memory");
+            return false;
         }
-        runningSign = null;
-        startExplosion(signTimer);
+
+        startExplosion(getSignTimer());
         return true;
     }
+
 
     /**
      * Start explosion when the count down has finished
      *
      * @param signTimer the {@link org.codemine.countdownsigns.SignTimer}
      */
-    public void startExplosion(SignTimer signTimer) {
+    protected void startExplosion(SignTimer signTimer) {
         try {
-            explosion = (Explosion) new Explosion(this, getSignTimer().getSignLocation().getLocation().getBlock().getState(),
+            deleteConfigs = true;
+            explosion = new Explosion(this, getSignTimer().getSignLocation().getLocation().getBlock().getState(),
                     getSignTimer().getExplodingLocation().getLocation().getBlock().getState(),
                     getSignTimer().isUseSound(),
                     getSignTimer().isExplosion(),
@@ -395,8 +452,52 @@ public class CDS extends JavaPlugin implements Listener {
             MessageUtil.logDebug(Level.SEVERE, e.getMessage());
             e.printStackTrace();
         }
-        //TODO Fix bug that still protects the blocks after the Countdown has ended
     }
+
+    public void stopExplosion() {
+
+        if (getExplosionTask().innerRunning()) {
+            try {
+                getExplosionTask().getInnerRun().cancel();
+                if (isDebug())
+                    MessageUtil.logDebug(Level.INFO, "Inner Runner in Explosion has been successfully stopped");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        deleteSignConfigs();
+        deleteConfigs = false;
+        toggle = false;
+        if (isDebug())
+            MessageUtil.logDebug(Level.INFO, "Configs were deleted from file as explosion has finished");
+
+        if (getExplosionTask() != null && getExplosionTask().isMainRunning()) {
+
+            try {
+                getExplosionTask().cancel();
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
+            if (isDebug())
+                MessageUtil.logDebug(Level.INFO, "Main explosion task has now been fully stopped");
+
+        }
+        setExplosionTaskToNull();
+
+        if (checkSignTimerIsLoaded()) {
+            setSignTimer(null);
+
+            if (isDebug())
+                MessageUtil.logDebug(Level.INFO, "Sign Timer object has been set to null");
+        }
+
+
+        MessageUtil.logInfoFormatted("Explosion task has been successfully stopped");
+    }
+
+
+
 
     /**
      * Sets countdown task to null.
@@ -459,6 +560,7 @@ public class CDS extends JavaPlugin implements Listener {
 
         if (containsSignTimer()) {
             setSignTimer((SignTimer) getConfig().get("sign.signtimer"));
+            setSaveOnDisable(true);
         } else {
             throw new NullPointerException("No record of SignTimer can be found in config file");
         }
@@ -515,7 +617,8 @@ public class CDS extends JavaPlugin implements Listener {
 
         if (toDisk) {
             saveConfig();
-        }
+            setSaveOnDisable(false);
+        } else setSaveOnDisable(true);
     }
 
     /**
@@ -525,7 +628,7 @@ public class CDS extends JavaPlugin implements Listener {
      */
     public void startSignTask(RunningSign paramSign) {
 
-        this.signTask = paramSign.runTaskTimer(this, 100l, signTimer.getUpdatePeriod(), TimeUnit.TICKS);
+        this.signTask = paramSign.runTaskTimer(this, 0l, signTimer.getUpdatePeriod(), TimeUnit.TICKS);
 
     }
 
@@ -564,13 +667,38 @@ public class CDS extends JavaPlugin implements Listener {
 
     public boolean deleteSignConfigs() {
 
-        if (containsSignTimer()) {
+        try {
+
             getConfig().getConfigurationSection("sign").set("signtimer", null);
             saveConfig();
+            reloadConfig();
+            deleteConfigs = false;
+            toggle = false;
+            if (isSaveOnDisable())
+                setSaveOnDisable(false);
             return true;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return false;
     }
 
+    /**
+     * Gets saveOnDisable.
+     *
+     * @return Value of saveOnDisable.
+     */
+    public boolean isSaveOnDisable() {
+        return saveOnDisable;
+    }
+
+    /**
+     * Sets new saveOnDisable.
+     *
+     * @param saveOnDisable New value of saveOnDisable.
+     */
+    public void setSaveOnDisable(boolean saveOnDisable) {
+        this.saveOnDisable = saveOnDisable;
+    }
 }

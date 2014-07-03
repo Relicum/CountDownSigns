@@ -36,6 +36,9 @@ public class SignTimer implements ConfigurationSerializable {
     private long timeLeft;
     @Getter
     @Setter
+    private boolean startOnRestart;
+    @Getter
+    @Setter
     private boolean paused;
     @Getter
     @Setter
@@ -62,6 +65,7 @@ public class SignTimer implements ConfigurationSerializable {
         useSound = true;
         useEffect = true;
         completed = false;
+        startOnRestart = true;
     }
 
     // deserialize the object
@@ -70,6 +74,7 @@ public class SignTimer implements ConfigurationSerializable {
                 objId = map.get("identifier"),
                 objUpdate = map.get("updatePeriod"),
                 objLeft = map.get("timeLeft"),
+                objRun = map.get("running"),
                 objPause = map.get("paused"),
                 objComp = map.get("completed"),
                 objExp = map.get("explosion"),
@@ -77,13 +82,13 @@ public class SignTimer implements ConfigurationSerializable {
                 objEffect = map.get("useEffect"),
                 objSign = map.get("signLocation"),
                 objExpLoc = map.get("explodingLocation");
-        if (objLines == null || objId == null || objUpdate == null || objLeft == null || objPause == null || objComp == null
+        if (objLines == null || objId == null || objRun == null || objUpdate == null || objLeft == null || objPause == null || objComp == null
                 || objExp == null || objSound == null || objEffect == null || objSign == null || objExpLoc == null) {
             throw new NullPointerException("One of the values in SignTimer is null while trying to deserialize the class");
         }
         @SuppressWarnings("unchecked")
         ArrayList<String> li = (ArrayList<String>) objLines;
-        return new SignTimer(li.toArray(new String[4]), (String) objId, (Integer) objUpdate, (Integer) objLeft,
+        return new SignTimer(li.toArray(new String[4]), (String) objId, (Integer) objUpdate, (Integer) objLeft, (boolean) objRun,
                 (boolean) objPause, (boolean) objComp, (boolean) objExp, (boolean) objSound, (boolean) objEffect, (BlockLoc) objSign, (BlockLoc) objExpLoc);
     }
 
@@ -125,6 +130,7 @@ public class SignTimer implements ConfigurationSerializable {
         map.put("useEffect", isUseEffect());
         map.put("signLocation", getSignLocation());
         map.put("explodingLocation", getExplodingLocation());
+        map.put("running", this.isStartOnRestart());
         return map;
     }
 
@@ -135,6 +141,7 @@ public class SignTimer implements ConfigurationSerializable {
                 ", identifier='" + identifier + '\'' +
                 ", updatePeriod=" + updatePeriod +
                 ", timeLeft=" + timeLeft +
+                ", running=" + startOnRestart +
                 ", paused=" + paused +
                 ", completed=" + completed +
                 ", explosion=" + explosion +
@@ -144,6 +151,4 @@ public class SignTimer implements ConfigurationSerializable {
                 ", explodingLocation=" + explodingLocation +
                 '}';
     }
-
-
 }

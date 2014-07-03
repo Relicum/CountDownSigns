@@ -17,11 +17,13 @@ import org.codemine.schedule.TimeUnit;
 import java.util.*;
 import java.util.logging.Level;
 
+import static org.codemine.countdownsigns.Effects.ParticleEffect.displayBlockCrack;
+
 /**
  * Explosion provides the effect once the count down has reached zero.
  *
  * @author Relicum
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class Explosion extends BukkitRun {
 
@@ -51,7 +53,7 @@ public class Explosion extends BukkitRun {
 
     private boolean effect;
 
-    private Random random = new Random(1635787324);
+    private Random random = new Random();
 
     private FireworkEffects fw = new FireworkEffects();
 
@@ -105,13 +107,9 @@ public class Explosion extends BukkitRun {
     @Override
     public void run() {
         setMainRunning(true);
-        //plugin.setCountdownTaskToNull();
-        sign.getWorld().setStorm(true);
-        sign.getWorld().setThundering(true);
-        sign.getWorld().setThunderDuration(160);
 
         //ParticleEffect.WITCH_MAGIC.display(sign.getLocation(), 0.0f, 1.0f, 0.0f, 1.9f, 40);
-        ParticleEffect.RED_DUST.display(sign.getLocation(), 1.4f, 3.0f, -1.4f, 2.9f, 40);
+        displayBlockCrack(sign.getLocation(), 5, 17, (byte) 1.4f, 3.0f, -1.4f, 2.9f, 40);
         //ParticleEffect.RED_DUST.display(sign.getLocation(), -3.0f, 6.0f, 3.0f, 3.9f, 40);
         //ParticleEffect.RED_DUST.display(sign.getLocation(), 1.0f, 8.0f, -1.0f, 4.9f, 40);
 
@@ -136,10 +134,10 @@ public class Explosion extends BukkitRun {
                     setInnerRunning(true);
                 }
                 if (count < -1) {
-                    setInnerRunning(false);
+
                     hasRun = true;
                 }
-                setInnerRunning(true);
+
                 if (!hasRun) {
 
                     int rand = random.nextInt(100) + 1;
@@ -210,11 +208,11 @@ public class Explosion extends BukkitRun {
                         }
                     }
 
-                    sign.getWorld().strikeLightningEffect(sign.getLocation().add(x / 20.0f, 0.5f, z / 20.0f));
+                    sign.getWorld().strikeLightningEffect(sign.getLocation().add(x / 10.0f, 0.5f, z / 10.0f));
                     if (rand <= 50)
-                    ParticleEffect.LARGE_EXPLODE.display(sign.getLocation(), x / 15f, 1.5f, z / 15f, 1.5f, 40);
+                        ParticleEffect.LARGE_EXPLODE.display(sign.getLocation(), x / 3.0f, 0.5f, z / 3.0f, 1.5f, 40);
                     else
-                    ParticleEffect.MOB_SPELL.display(sign.getLocation(), x / 10f, 5, z / 10f, 1.9f, 40);
+                        ParticleEffect.MOB_SPELL.display(sign.getLocation(), x, 10, z, 1.9f, 40);
 
                     count -= 5;
 
@@ -256,23 +254,6 @@ public class Explosion extends BukkitRun {
             }
 
         }.runTaskTimer(plugin, 80l, 5l);
-        if (hasRun) {
-
-            sign.getLocation().getWorld().playSound(location, Sound.WITHER_SHOOT, 20.0f, 1.0f);
-            //ParticleEffect.HEART.display(location.add(0.3, 0.1, 0.3), 16.0d, 0.0f, 2.0f, 0.0f, 0.12f, 50);
-            sign.getWorld().setStorm(false);
-            sign.getWorld().setThundering(false);
-            sign.getWorld().setThunderDuration(0);
-
-            try {
-                plugin.getConfig().getConfigurationSection("sign").set("signtimer", null);
-                plugin.saveConfig();
-                plugin.reloadConfig();
-            } catch (Exception e) {
-                MessageUtil.logDebug(Level.SEVERE, "Error thrown when trying to delete settings from Explosion BukRun");
-                e.printStackTrace();
-            }
-        }
     }
 
 
@@ -280,8 +261,10 @@ public class Explosion extends BukkitRun {
 
         if (chicky.getType().equals(EntityType.CHICKEN)) {
             if (chicky.isValid()) {
+
                 chicky.remove();
             } else {
+
                 MessageUtil.logWarningFormatted("Chicken has died with id of " + chicky.getUniqueId().toString());
                 MessageUtil.logWarningFormatted("Tried to mark same entity for remove LET RELICUM KNOW");
             }
@@ -291,15 +274,16 @@ public class Explosion extends BukkitRun {
 
 
     public void cancelInnerRun() {
-        if (innerRun != null) {
-            innerRun.cancel();
-            MessageUtil.logDebug(Level.INFO, "The inner runnable in explosion should now be canceled");
-            innerRun = null;
 
-        } else {
-            MessageUtil.logDebug(Level.SEVERE, "Unable to stop the inner runnable");
+        sign.getLocation().getWorld().playSound(location, Sound.WITHER_SHOOT, 20.0f, 1.0f);
+        //ParticleEffect.HEART.display(location.add(0.3, 0.1, 0.3), 16.0d, 0.0f, 2.0f, 0.0f, 0.12f, 50);
+        sign.getWorld().setThundering(false);
+        sign.getWorld().setStorm(false);
+        sign.getWorld().setWeatherDuration(100000);
+        sign.getWorld().save();
 
-        }
+
+        plugin.stopExplosion();
     }
 
 
@@ -393,12 +377,12 @@ public class Explosion extends BukkitRun {
         return innerRunning;
     }
 
-
-    public class ExplosionInner extends BukkitRun {
-
-        @Override
-        public void run() {
-
-        }
+    /**
+     * Gets innerRun.
+     *
+     * @return Value of innerRun.
+     */
+    public BukkitTask getInnerRun() {
+        return innerRun;
     }
 }

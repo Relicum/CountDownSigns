@@ -1,4 +1,4 @@
-# CountdownSigns By Relicum
+# CountdownSigns By Relicum DO NOT CHANGE THESE AT THE MOMENT
 sign:
   lines:
   - '&9&lTime Left'
@@ -10,11 +10,9 @@ sign:
     identifier: '[CDS]'
     update-period: 20
     time-left: 600
-    pause: false
+    pause: true
     explosion: true
     use-sound: true
     use-effect: true
-    debug: true
+    debug: false
     auto-protect: true
-
-

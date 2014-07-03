@@ -187,7 +187,7 @@ public class SignChange implements Listener {
             MessageUtil.sendMessage(e.getPlayer(), "Countdown set: " + line[0] + " " + line[1]);
             e.getPlayer().sendRawMessage("");
             showClickStart(e.getPlayer());
-            MessageUtil.sendMessage(e.getPlayer(), "Or run the &6/cds toggle &a command to start it");
+            //MessageUtil.sendMessage(e.getPlayer(), "Or run the &6/cds toggle &a command to start it");
             MessageUtil.sendMessage(e.getPlayer(), "Toggle the Countdown as ofter as you like");
             MessageUtil.sendRawMessage(e.getPlayer(), MessageUtil.fullline(ChatColor.BLUE, ChatColor.GREEN, ChatColor.ITALIC, '-'));
 
@@ -226,7 +226,7 @@ public class SignChange implements Listener {
         }
         lines[1] = sb.toString();
         return lines;
-        // return "%DAY%:D %HOUR%:H %MIN%:M";
+
     }
 
     public JChat getjChat() {
@@ -249,11 +249,19 @@ public class SignChange implements Listener {
                     .then("START")
                     .color(BLUE)
                     .style(UNDERLINE)
-                    .itemTooltip("Click to Start Countdown", Arrays.asList(
+                    .itemTooltip("&6Click to Start Countdown", Arrays.asList(
                             "&cTo start the Countdown just click here",
                             " ",
                             "&bOr when you are ready run the command /cds toggle"))
                     .command("/cds toggle")
+                    .then(" ")
+                    .color(GREEN)
+                    .then("or run ")
+                    .color(GREEN)
+                    .then("/cds toggle")
+                    .color(GOLD)
+                    .style(ITALIC)
+                    .tooltip("&aRun this command")
                     .send(player);
         } catch (Exception e) {
 

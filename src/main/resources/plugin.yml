@@ -10,9 +10,8 @@ commands:
         usage: /<command> [main]
         permission: countdown.sign
     cds remove:
-        label: cds remove
         description: Any prefix command that all commands run under
-        usage: /<command> remove
+        usage: /<command> sign|chickens|help
         aliases: [cdsr]
         permission: countdown.sign.remove
     cds toggle:
@@ -30,6 +29,16 @@ commands:
         usage: /<command> [arg]
         aliases: [cdsh]
         permission: countdown.sign.help
+    cds tp:
+        description: Quick access back to the sign local using Teleport
+        usage: /<command> tp
+        aliases: [cdstp]
+        permission: countdown.sign.tp
+    cds set:
+        description: Used to set settings related directly to this plugin
+        usage: /<command> protection|enabeled|effect|help
+        aliases: [cdsset]
+        permission: countdown.sign.set
 
 
 permissions:
@@ -41,6 +50,8 @@ permissions:
             countdown.sign.status: true
             countdown.sign.help: true
             countdown.sign.remove: true
+            countdown.sign.tp: true
+            countdown.sign.set: true
     countdown.sign.place:
         description: Allows the player to place Countdown Signs
         default: op
@@ -56,7 +67,10 @@ permissions:
     countdown.sign.remove:
         description: Remove the sign and all its configs
         default: op
-    countdown.sign:
-        description: Many prefix for commands
+    countdown.sign.tp:
+        description: Allows admin to tp direct to the sign if there is any issues
         default: op
+    countdown.sign.set:
+         description: Oermission required to changing any of the plugins settings, while in game.
+         default: op
 
