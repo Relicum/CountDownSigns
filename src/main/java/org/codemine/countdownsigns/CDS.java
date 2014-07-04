@@ -63,6 +63,7 @@ public class CDS extends JavaPlugin implements Listener {
         getConfig().options().copyDefaults(true);
         saveDefaultConfig();
 
+
         this.debug = getConfig().getBoolean("sign.settings.debug");
         if (containsSignTimer()) {
             signTimer = (SignTimer) getConfig().get("sign.signtimer");

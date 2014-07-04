@@ -112,6 +112,7 @@ public class CommandManager implements TabExecutor {
                 MessageUtil.sendAdminMessage(player, "&aSo for 1 day you would add &b1&f:&bD &a or &b1&f:&bd");
                 MessageUtil.sendAdminMessage(player, "&aMore than one period use single space to separate them");
                 MessageUtil.sendAdminMessage(player, "&6Example: &92&f:&4D&f &94&f:&4H&f &930&f:&4M &a add the format on 2nd line of sign");
+
                 player.sendMessage("");
                 setMessageFooter(player);
                 return true;
@@ -159,10 +160,10 @@ public class CommandManager implements TabExecutor {
                 MessageUtil.sendRawMessage(player, MessageUtil.centeredHeading(ChatColor.DARK_RED, ChatColor.ITALIC, "Adding Time values and Units"));
                 MessageUtil.sendMessage(player, GREEN + "Number of inputs is between 1 & 3 " + GOLD + "value:timeunit");
                 MessageUtil.sendMessage(player, "All inputs on 2nd line with a space between them");
-                MessageUtil.sendMessage(player, GOLD + "DAYS        " + JSymbols.EYES_AND_HEAD + GREEN + " Min=1 Max=07" + RED + " D " + GREEN + "or " + RED + "d");
-                MessageUtil.sendMessage(player, GOLD + "HOUR        " + JSymbols.EYES_AND_HEAD + GREEN + " Min=1 Max=24" + RED + " H" + GREEN + " or " + RED + "h");
-                MessageUtil.sendMessage(player, GOLD + "MINUTES    " + JSymbols.EYES_AND_HEAD + GREEN + " Min=1 Max=60" + RED + " M" + GREEN + " or " + RED + "m");
-                MessageUtil.sendMessage(player, GOLD + "SECOND     " + JSymbols.EYES_AND_HEAD + GREEN + " Min=1 Max=60" + RED + " S" + GREEN + " or " + RED + "s");
+                MessageUtil.sendMessage(player, GOLD + "DAYS        " + JSymbols.WHITE_STAR + GREEN + " Min=1 Max=07" + RED + " D " + GREEN + "or " + RED + "d");
+                MessageUtil.sendMessage(player, GOLD + "HOUR        " + JSymbols.WHITE_STAR + GREEN + " Min=1 Max=24" + RED + " H" + GREEN + " or " + RED + "h");
+                MessageUtil.sendMessage(player, GOLD + "MINUTES    " + JSymbols.WHITE_STAR + GREEN + " Min=1 Max=60" + RED + " M" + GREEN + " or " + RED + "m");
+                MessageUtil.sendMessage(player, GOLD + "SECOND     " + JSymbols.WHITE_STAR + GREEN + " Min=1 Max=60" + RED + " S" + GREEN + " or " + RED + "s");
                 showWikiLink(player);
                 setMessageFooter(player);
 
