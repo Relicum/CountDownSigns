@@ -22,7 +22,7 @@
         </developer>
     </developers>
     <build>
-        <defaultGoal>clean install</defaultGoal>
+        <defaultGoal>clean package</defaultGoal>
         <resources>
             <resource>
                 <targetPath>.</targetPath>

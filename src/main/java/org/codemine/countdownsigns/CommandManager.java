@@ -27,6 +27,7 @@ import static org.bukkit.ChatColor.*;
 public class CommandManager implements TabExecutor {
 
     private final CDS plugin;
+
     private final List<String> TAB1 = ImmutableList.of("help", "toggle", "remove", "status", "tp", "set");
     private final List<String> TAB2 = ImmutableList.of("setup", "toggle", "remove", "status", "formats", "tp", "set");
     private final List<String> REMOVE = ImmutableList.of("chickens", "sign", "help");

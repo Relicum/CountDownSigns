@@ -1,5 +1,6 @@
 package org.codemine.countdownsigns;
 
+
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.BlockState;
@@ -26,23 +27,14 @@ public class CDS extends JavaPlugin implements Listener {
     private static CDS instance;
 
     public boolean toggle = false;
-
     public boolean deleteConfigs = false;
-
     private boolean debug;
-
     private SignTimer signTimer;
-
     private RunningSign runningSign;
-
     private BukkitTask signTask;
-
     private Explosion explosion;
-
     private CommandManager cm;
-
     private Map<String, Object> signMap;
-
     private boolean saveOnDisable = true;
 
     /**
@@ -54,6 +46,7 @@ public class CDS extends JavaPlugin implements Listener {
         return instance;
 
     }
+
 
     public void onEnable() {
         ConfigurationSerialization.registerClass(BlockLoc.class);
@@ -412,7 +405,6 @@ public class CDS extends JavaPlugin implements Listener {
                 } else MessageUtil.logServereFormatted("Unable to remove configs from file");
 
 
-
             }
         }
 
@@ -496,8 +488,6 @@ public class CDS extends JavaPlugin implements Listener {
 
         MessageUtil.logInfoFormatted("Explosion task has been successfully stopped");
     }
-
-
 
 
     /**
